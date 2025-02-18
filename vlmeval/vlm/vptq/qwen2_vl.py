@@ -9,9 +9,10 @@ import logging
 import torch
 
 from ..base import BaseModel
-from .prompt import Qwen2VLPromptMixin
+from ..qwen2_vl.prompt import Qwen2VLPromptMixin
 from ...smp import get_rank_and_world_size, get_gpu_memory, auto_split_flag
 
+import vptq
 
 def ensure_image_url(image: str) -> str:
     prefixes = ['http://', 'https://', 'file://', 'data:image;']
@@ -59,7 +60,7 @@ def split_model():
     return device_map
 
 
-class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
+class VPTQQwen2VLChat(Qwen2VLPromptMixin, BaseModel):
     INSTALL_REQ = False
     INTERLEAVE = True
     VIDEO_LLM = True
@@ -100,36 +101,21 @@ class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
         self.model_path = model_path
         MODEL_CLS = None  
 
-        if '2.5' in model_path:
-            from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
-            MODEL_CLS = Qwen2_5_VLForConditionalGeneration
-            self.processor = AutoProcessor.from_pretrained(model_path)
-        else:
-            from transformers import Qwen2VLForConditionalGeneration, Qwen2VLProcessor
-            MODEL_CLS = Qwen2VLForConditionalGeneration
-            self.processor = Qwen2VLProcessor.from_pretrained(model_path)
+        
+        from transformers import  Qwen2VLProcessor
+        self.processor = Qwen2VLProcessor.from_pretrained(model_path)
 
         gpu_mems = get_gpu_memory()
         max_gpu_mem = max(gpu_mems) if gpu_mems != [] else -1
         assert max_gpu_mem > 0
 
-        # If only one process and GPU memory is less than 40GB
-        if '72b' in self.model_path.lower():
-            self.model = MODEL_CLS.from_pretrained(
-                model_path, torch_dtype='auto', device_map=split_model(), attn_implementation='flash_attention_2'
+
+        self.model = vptq.Qwen2VLForConditionalGeneration.from_pretrained(
+                model_path, 
+                torch_dtype=torch.bfloat16, 
+                device_map='auto' #, attn_implementation='flash_attention_2'
             )
-            self.model.eval()
-        elif auto_split_flag():
-            assert world_size == 1, 'Only support world_size == 1 when AUTO_SPLIT is set for non-72B Qwen2-VL'
-            # Will Use All GPUs to run one model
-            self.model = MODEL_CLS.from_pretrained(
-                model_path, torch_dtype='auto', device_map='auto', attn_implementation='flash_attention_2'
-            )
-        else:
-            self.model = MODEL_CLS.from_pretrained(
-                model_path, torch_dtype='auto', device_map='cpu', attn_implementation='flash_attention_2'
-            )
-            self.model.cuda().eval()
+        self.model.eval()
 
         torch.cuda.empty_cache()
 
@@ -195,6 +181,7 @@ class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
         generated_ids = self.model.generate(
             **inputs,
             **self.generate_kwargs,
+            pad_token_id=self.processor.tokenizer.eos_token_id
         )
         generated_ids = [
             output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, generated_ids)

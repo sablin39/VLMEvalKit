@@ -2,9 +2,9 @@ import torch
 from PIL import Image
 import os.path as osp
 import sys
-from .base import BaseModel
-from ..smp import *
-from ..dataset import DATASET_TYPE
+from ..base import BaseModel
+from ...smp import *
+from ...dataset import DATASET_TYPE
 
 
 class llama_vision(BaseModel):
