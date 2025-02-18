@@ -113,7 +113,7 @@ class VPTQQwen2VLChat(Qwen2VLPromptMixin, BaseModel):
         self.model = vptq.Qwen2VLForConditionalGeneration.from_pretrained(
                 model_path, 
                 torch_dtype=torch.bfloat16, 
-                device_map='auto' #, attn_implementation='flash_attention_2'
+                device_map=split_model(), attn_implementation='flash_attention_2'
             )
         self.model.eval()
 
@@ -176,7 +176,7 @@ class VPTQQwen2VLChat(Qwen2VLPromptMixin, BaseModel):
         text = self.processor.apply_chat_template([messages], tokenize=False, add_generation_prompt=True)
         images, videos = process_vision_info([messages])
         inputs = self.processor(text=text, images=images, videos=videos, padding=True, return_tensors='pt')
-        inputs = inputs.to('cuda')
+        inputs = inputs.to(self.model.device)
 
         generated_ids = self.model.generate(
             **inputs,

@@ -16,6 +16,12 @@ RBDash_ROOT = None
 VITA_ROOT = None
 LLAVA_V1_7B_MODEL_PTH = 'Please set your local path to LLaVA-7B-v1.1 here, the model weight is obtained by merging LLaVA delta weight based on vicuna-7b-v1.1 in https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md with vicuna-7b-v1.1. '
 
+
+vptq_models = {
+    "VPTQQwen2VLChat":partial(VPTQQwen2VLChat, model_path='VPTQ-community/Qwen2-7B-Instruct-v8-k65536-65536-woft'),
+}
+
+
 video_models = {
     'Video-LLaVA-7B':partial(VideoLLaVA, model_path='LanguageBind/Video-LLaVA-7B'),
     'Video-LLaVA-7B-HF':partial(VideoLLaVA_HF, model_path='LanguageBind/Video-LLaVA-7B-hf'),
@@ -493,7 +499,8 @@ model_groups = [
     mantis_series, mmalaya_series, phi3_series, xgen_mm_series, qwen2vl_series,
     slime_series, eagle_series, moondream_series, llama_series, molmo_series,
     kosmos_series, points_series, nvlm_series, vintern_series, h2ovl_series, aria_series,
-    smolvlm_series, sail_series, valley_series, vita_series, ross_series, emu_series, ola_series, ursa_series
+    smolvlm_series, sail_series, valley_series, vita_series, ross_series, emu_series, ola_series, ursa_series,
+    vptq_models
 ]
 
 for grp in model_groups:

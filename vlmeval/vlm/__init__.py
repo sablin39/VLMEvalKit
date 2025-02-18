@@ -66,3 +66,5 @@ from .valley import ValleyEagleChat
 from .ross import Ross
 from .ola import Ola
 from .ursa import UrsaChat
+
+from .vptq import VPTQQwen2VLChat
