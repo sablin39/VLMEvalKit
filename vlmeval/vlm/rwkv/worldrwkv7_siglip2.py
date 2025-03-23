@@ -23,7 +23,7 @@ def ensure_image_url(image: str) -> str:
     raise ValueError(f'Invalid image: {image}')
 
 
-class WorldRWKV7_Siglip2(Qwen2VLPromptMixin, BaseModel):
+class WorldRWKV7_Siglip2(WorldRWKVPromptMixin, BaseModel):
     INSTALL_REQ = False
     INTERLEAVE = True
     VIDEO_LLM = False

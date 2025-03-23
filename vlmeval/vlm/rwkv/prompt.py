@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-class Qwen2VLPromptMixin:
+class WorldRWKVPromptMixin:
     """
     Mixin class for WorldRWKV to build custom prompt for different datasets.
     
